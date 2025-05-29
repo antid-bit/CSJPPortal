@@ -5,20 +5,26 @@ include 'db_connection.php';
 
 $message = '';
 
-if ($_SERVER["REQUEST_METHOD"] == "POST") {
+if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST["submit"])) {
     $user_id = $_POST['user_id'] ?? '';
+    $lastname = $_POST['lastname'] ?? '';
+    $firstname = $_POST['firstname'] ?? '';
+    $birthday = $_POST['birthday'] ?? '';
     $year_level_id = intval($_POST['year_level_id'] ?? 1);
     $course_id = intval($_POST['course_id'] ?? 1);
 
-    if (!$user_id) {
-        $message = "User ID is required.";
+    if (!$user_id || !$lastname || !$firstname || !$birthday) {
+        $message = "All fields are required.";
     } else {
-        $stmt = $conn->prepare("INSERT INTO addstudent (user_id, year_level_id, course_id) VALUES (?, ?, ?)");
+        // Use placeholders (?) and bind all 6 values
+        $stmt = $conn->prepare("INSERT INTO users (user_id, lastname, firstname, birthday, year_level_id, course_id) VALUES (?, ?, ?, ?, ?, ?)");
+
         if ($stmt === false) {
             die("Prepare failed: " . $conn->error);
         }
 
-        $stmt->bind_param("sii", $user_id, $year_level_id, $course_id);
+        // Bind 6 parameters: s = string, i = integer
+        $stmt->bind_param("ssssii", $user_id, $lastname, $firstname, $birthday, $year_level_id, $course_id);
 
         if ($stmt->execute()) {
             $message = "Student added successfully with ID: " . htmlspecialchars($user_id);
@@ -78,9 +84,18 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                     <p class="font-semibold text-green-600"><?php echo $message; ?></p>
                 <?php endif; ?>
 
-                <form method="post" action="">
+               <form method="POST" action="">
                     <label>User ID:</label><br>
                     <input type="text" name="user_id" required class="border rounded-md p-2"><br><br>
+
+                    <label>Last Name:</label><br>
+                    <input type="text" name="lastname" required class="border rounded-md p-2"><br><br>
+
+                    <label>First Name:</label><br>
+                    <input type="text" name="firstname" required class="border rounded-md p-2"><br><br>
+
+                    <label>Birthday</label><br>
+                    <input type="date" name="birthday" required class="border rounded-md p-2"><br><br>
 
                     <label>Year Level:</label><br>
                     <select name="year_level_id" class="border rounded-md p-2">
@@ -92,14 +107,14 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
                     <label>Course:</label><br>
                     <select name="course_id" class="border rounded-md p-2">
-                        <option value="1">BSCS</option>
+                        <option value="1" selected>BSCS</option> <!-- Now selected by default -->
                         <option value="2">BSAIS</option>
                         <option value="3">BSENTREP</option>
                         <option value="4">CHTM</option>
                         <option value="5">BSBA</option>
                     </select><br><br>
 
-                    <button type="submit" class="bg-blue-600 text-white py-2 px-4 rounded-md">Add Student</button>
+                    <button type="submit" name="submit" class="bg-blue-600 text-white py-2 px-4 rounded-md">Add Student</button>
                 </form>
             </div>
         </div>
